@@ -40,7 +40,13 @@ const getDB = (): DB => {
           role: 'admin',
           mcmiStatus: 'none',
           fatherName: 'احمد',
-          birthPlace: 'تهران'
+          birthPlace: 'تهران',
+          /* Fix: Added missing birthDate property to satisfy the UserData interface requirement */
+          birthDate: {
+            day: '1',
+            month: 'فروردین',
+            year: '1368'
+          }
         }
       ],
       courses: initialCourses,

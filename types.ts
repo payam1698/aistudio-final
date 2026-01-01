@@ -11,15 +11,15 @@ export interface ScoreReport {
 export interface UserData {
   fullNameFa: string;
   fullNameEn: string;
-  fatherName?: string;
-  birthPlace?: string;
-  birthDate?: {
+  fatherName: string;
+  birthPlace: string;
+  birthDate: {
     day: string;
     month: string;
     year: string;
   };
   age: number;
-  gender: 'male' | 'female';
+  gender: 'male' | 'female' | '';
   education: string;
   maritalStatus: string;
   mobile: string; 

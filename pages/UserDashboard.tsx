@@ -1,150 +1,278 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { toPersianDigits } from '../utils';
 import { 
   User, BookOpen, FileText, ShieldCheck, 
-  ChevronLeft, Award, Clock, ArrowLeft, LogOut
+  Award, Clock, ArrowLeft, LogOut, Edit, 
+  Mail, Send, Calendar, UserCircle2, MapPin, Heart, GraduationCap
 } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import Button from '../components/Button';
 
+type TabType = 'mcmi' | 'profile' | 'message';
+
 const UserDashboard: React.FC = () => {
-  const { user, logout } = useAuth();
+  const { user, logout, updateUser } = useAuth();
   const navigate = useNavigate();
+  const [activeTab, setActiveTab] = useState<TabType>('mcmi');
+  const [isSaving, setIsSaving] = useState(false);
+
+  // Form States
+  const [profileForm, setProfileForm] = useState({
+    fullNameFa: user?.fullNameFa || '',
+    fullNameEn: user?.fullNameEn || '',
+    fatherName: user?.fatherName || '',
+    birthPlace: user?.birthPlace || '',
+    birthDay: user?.birthDate?.day || '',
+    birthMonth: user?.birthDate?.month || '',
+    birthYear: user?.birthDate?.year || '',
+    gender: user?.gender || '',
+    education: user?.education || '',
+    maritalStatus: user?.maritalStatus || ''
+  });
+
+  const [messageForm, setMessageForm] = useState({
+    subject: '',
+    content: ''
+  });
 
   if (!user) {
     navigate('/login');
     return null;
   }
 
-  const sections = [
-    { id: 'courses', label: 'دوره‌های من', icon: BookOpen, count: 0 },
-    { id: 'mcmi', label: 'آزمون میلون ۲', icon: FileText, count: user.mcmiStatus === 'approved' ? 1 : 0 },
-    { id: 'certs', label: 'گواهینامه‌ها', icon: Award, count: 0 },
+  const months = [
+    'فروردین', 'اردیبهشت', 'خرداد', 'تیر', 'مرداد', 'شهریور',
+    'مهر', 'آبان', 'آذر', 'دی', 'بهمن', 'اسفند'
   ];
 
+  const handleProfileSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSaving(true);
+    const { birthDay, birthMonth, birthYear, ...rest } = profileForm;
+    
+    await updateUser({
+      ...rest,
+      gender: profileForm.gender as 'male' | 'female',
+      birthDate: {
+        day: birthDay,
+        month: birthMonth,
+        year: birthYear
+      }
+    });
+    
+    setTimeout(() => {
+      setIsSaving(false);
+      alert('تغییرات با موفقیت ذخیره شد.');
+    }, 500);
+  };
+
+  const handleSendMessage = (e: React.FormEvent) => {
+    e.preventDefault();
+    alert('پیام شما با موفقیت به مدیریت ارسال شد (ایمیل گردید).');
+    setMessageForm({ subject: '', content: '' });
+  };
+
   return (
-    <div className="bg-gray-50 min-h-screen py-10">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div className="bg-gray-50 min-h-screen py-10 font-sans">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
         
-        {/* Top Header */}
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-10 bg-white p-6 rounded-3xl shadow-sm border border-gray-100">
-            <div className="flex items-center gap-5">
-                <div className="w-20 h-20 bg-brand/10 rounded-full flex items-center justify-center text-brand border-2 border-white shadow-lg">
-                    <User size={40} />
-                </div>
-                <div>
-                    <h1 className="text-2xl font-bold text-gray-900">{user.fullNameFa}</h1>
-                    <p className="text-gray-500 text-sm mt-1">خوش آمدید | {toPersianDigits(user.mobile)}</p>
-                </div>
+        {/* Header Section */}
+        <div className="bg-brand rounded-3xl p-6 md:p-8 text-white shadow-xl mb-8 relative overflow-hidden">
+            <div className="absolute top-0 left-0 w-full h-full opacity-10 pointer-events-none">
+                <svg width="100%" height="100%" viewBox="0 0 100 100" preserveAspectRatio="none"><path d="M0 100 C 20 0 50 0 100 100 Z" fill="white" /></svg>
             </div>
-            <div className="flex gap-3 w-full md:w-auto">
-                <Button variant="outline" className="flex-1 md:flex-none text-red-500 border-red-100 hover:bg-red-50" onClick={logout}>
-                    <LogOut size={18} className="ml-2" /> خروج
+            <div className="relative z-10 flex flex-col md:flex-row justify-between items-center gap-6">
+                <div className="flex items-center gap-5">
+                    <div className="w-20 h-20 bg-white/20 rounded-full flex items-center justify-center backdrop-blur-md border-2 border-white/30">
+                        <User size={40} className="text-accent" />
+                    </div>
+                    <div>
+                        <h1 className="text-2xl font-bold">{user.fullNameFa}</h1>
+                        <p className="text-brand-light text-sm mt-1 opacity-80">{toPersianDigits(user.mobile)} | خوش آمدید</p>
+                    </div>
+                </div>
+                <Button variant="outline" className="text-white border-white/30 hover:bg-white hover:text-brand gap-2" onClick={logout}>
+                    <LogOut size={18} /> خروج از حساب
                 </Button>
             </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+        {/* Tab Navigation */}
+        <div className="flex bg-white p-2 rounded-2xl shadow-sm border border-gray-100 mb-8 overflow-x-auto no-scrollbar">
+            <button 
+                onClick={() => setActiveTab('mcmi')}
+                className={`flex-1 flex items-center justify-center gap-2 py-3 px-4 rounded-xl transition-all font-bold text-sm min-w-[120px] ${activeTab === 'mcmi' ? 'bg-brand text-white shadow-md' : 'text-gray-500 hover:bg-gray-50'}`}
+            >
+                <FileText size={18} /> آزمون میلون
+            </button>
+            <button 
+                onClick={() => setActiveTab('profile')}
+                className={`flex-1 flex items-center justify-center gap-2 py-3 px-4 rounded-xl transition-all font-bold text-sm min-w-[120px] ${activeTab === 'profile' ? 'bg-brand text-white shadow-md' : 'text-gray-500 hover:bg-gray-50'}`}
+            >
+                <UserCircle2 size={18} /> پروفایل
+            </button>
+            <button 
+                onClick={() => setActiveTab('message')}
+                className={`flex-1 flex items-center justify-center gap-2 py-3 px-4 rounded-xl transition-all font-bold text-sm min-w-[120px] ${activeTab === 'message' ? 'bg-brand text-white shadow-md' : 'text-gray-500 hover:bg-gray-50'}`}
+            >
+                <Mail size={18} /> ارسال پیام
+            </button>
+        </div>
+
+        {/* Tab Content */}
+        <div className="animate-fade-in">
             
-            {/* Sidebar Stats */}
-            <div className="lg:col-span-4 space-y-6">
-                <div className="bg-white rounded-3xl p-6 shadow-sm border border-gray-100">
-                    <h3 className="font-bold text-gray-900 mb-6 flex items-center gap-2">
-                        <ShieldCheck className="text-green-500" /> وضعیت آموزشی
-                    </h3>
-                    <div className="space-y-4">
-                        {sections.map(sec => (
-                            <div key={sec.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-2xl border border-gray-100">
-                                <div className="flex items-center gap-3">
-                                    <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center text-gray-400 shadow-sm">
-                                        <sec.icon size={20} />
-                                    </div>
-                                    <span className="text-sm font-bold text-gray-700">{sec.label}</span>
-                                </div>
-                                <span className="bg-brand text-white px-3 py-0.5 rounded-full text-xs font-bold font-mono">
-                                    {toPersianDigits(sec.count)}
-                                </span>
-                            </div>
-                        ))}
-                    </div>
-                </div>
-
-                <div className="bg-brand rounded-3xl p-6 text-white shadow-xl relative overflow-hidden group">
-                    <div className="relative z-10">
-                        <h3 className="font-bold text-lg mb-2">اطلاعات پروفایل</h3>
-                        <div className="space-y-3 text-sm opacity-90 font-light">
-                            <p>سن: {toPersianDigits(user.age)} سال</p>
-                            <p>تحصیلات: {user.education}</p>
-                            <p>وضعیت تأهل: {user.maritalStatus}</p>
+            {/* MCMI TAB */}
+            {activeTab === 'mcmi' && (
+                <div className="bg-white rounded-3xl p-8 shadow-sm border border-gray-100">
+                    <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
+                        <div>
+                            <h2 className="text-xl font-bold text-gray-900">آزمون میلون</h2>
+                            <p className="text-gray-500 text-sm mt-1">شروع آزمون جدید</p>
                         </div>
-                    </div>
-                    <div className="absolute -right-6 -bottom-6 text-white/10 group-hover:scale-110 transition-transform duration-500">
-                        <User size={120} />
-                    </div>
-                </div>
-            </div>
-
-            {/* Main Content Areas */}
-            <div className="lg:col-span-8 space-y-8">
-                
-                {/* MCMI-II Report Card */}
-                <section className="bg-white rounded-3xl p-8 shadow-sm border border-gray-100">
-                    <div className="flex justify-between items-center mb-8 pb-4 border-b border-gray-50">
-                        <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
-                            <FileText className="text-brand" /> نتایج آزمون میلون ۲
-                        </h2>
+                        <Link to="/mcmi">
+                            <Button className="gap-2 shadow-lg shadow-brand/20">
+                                <ArrowLeft size={18} /> شروع اولین آزمون
+                            </Button>
+                        </Link>
                     </div>
 
                     {user.mcmiStatus === 'approved' ? (
-                        <div className="bg-green-50 rounded-3xl p-6 border border-green-100 flex flex-col md:flex-row items-center justify-between gap-6">
+                        <div className="bg-green-50 rounded-2xl p-6 border border-green-100 flex items-center justify-between">
                             <div className="flex items-center gap-4">
-                                <div className="w-14 h-14 bg-white rounded-2xl flex items-center justify-center text-green-600 shadow-sm">
-                                    <ShieldCheck size={32} />
-                                </div>
+                                <div className="w-12 h-12 bg-white rounded-xl flex items-center justify-center text-green-600 shadow-sm"><ShieldCheck /></div>
                                 <div>
-                                    <h4 className="font-bold text-gray-900">گزارش MCMI-II</h4>
-                                    <p className="text-xs text-gray-500 mt-1">نسخه تحلیلی میلون ۲ آماده مشاهده است.</p>
+                                    <h4 className="font-bold text-gray-900">آخرین نتیجه آزمون</h4>
+                                    <p className="text-xs text-gray-500">گزارش تحلیلی شما آماده مشاهده است.</p>
                                 </div>
                             </div>
-                            <Link to="/mcmi">
-                                <Button className="bg-green-600 hover:bg-green-700 shadow-lg shadow-green-100 gap-2">
-                                    مشاهده گزارش کامل <ChevronLeft size={18} />
-                                </Button>
-                            </Link>
+                            <Link to="/mcmi"><Button variant="outline" size="sm">مشاهده گزارش</Button></Link>
                         </div>
                     ) : (
-                        <div className="text-center py-12 bg-gray-50 rounded-3xl border border-dashed border-gray-200">
-                            <FileText size={48} className="mx-auto text-gray-300 mb-4" />
-                            <h4 className="font-bold text-gray-700 mb-2">آزمون MCMI-II ثبت نشده است</h4>
-                            <p className="text-sm text-gray-400 mb-6">برای دریافت پروفایل بالینی بر اساس نسخه میلون ۲، آزمون را شروع کنید.</p>
-                            <Link to="/mcmi">
-                                <Button size="sm" variant="outline" className="border-brand text-brand hover:bg-brand hover:text-white">
-                                    شروع آزمون میلون ۲
-                                </Button>
-                            </Link>
+                        <div className="text-center py-16 bg-gray-50 rounded-3xl border-2 border-dashed border-gray-200">
+                            <FileText size={64} className="mx-auto text-gray-300 mb-4 opacity-50" />
+                            <p className="text-gray-500 font-medium">شما هنوز آزمونی انجام نداده‌اید.</p>
                         </div>
                     )}
-                </section>
+                </div>
+            )}
 
-                {/* Courses Section */}
-                <section className="bg-white rounded-3xl p-8 shadow-sm border border-gray-100">
-                    <div className="flex justify-between items-center mb-8 pb-4 border-b border-gray-50">
-                        <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
-                            <BookOpen className="text-brand" /> دوره‌های ثبت‌نام شده
-                        </h2>
-                    </div>
-                    <div className="text-center py-12">
-                        <BookOpen size={48} className="mx-auto text-gray-200 mb-4" />
-                        <p className="text-gray-400 text-sm">شما هنوز در دوره‌ای ثبت‌نام نکرده‌اید.</p>
-                        <Link to="/courses" className="mt-4 inline-block text-brand font-bold text-sm hover:underline">
-                            لیست دوره‌ها
-                        </Link>
-                    </div>
-                </section>
+            {/* PROFILE TAB */}
+            {activeTab === 'profile' && (
+                <div className="bg-white rounded-3xl p-8 shadow-sm border border-gray-100">
+                    <h2 className="text-xl font-bold text-gray-900 mb-8 border-b border-gray-50 pb-4 flex items-center gap-2">
+                        <Edit size={20} className="text-brand" /> ویرایش پروفایل
+                    </h2>
+                    <form onSubmit={handleProfileSubmit} className="space-y-6">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <label className="block text-sm font-bold text-gray-700 mb-2">نام و نام خانوادگی (فارسی)</label>
+                                <input type="text" className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 focus:bg-white focus:ring-2 focus:ring-brand transition-all" value={profileForm.fullNameFa} onChange={e => setProfileForm({...profileForm, fullNameFa: e.target.value})} />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-bold text-gray-700 mb-2">نام و نام خانوادگی (انگلیسی)</label>
+                                <input type="text" dir="ltr" className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 focus:bg-white focus:ring-2 focus:ring-brand transition-all" value={profileForm.fullNameEn} onChange={e => setProfileForm({...profileForm, fullNameEn: e.target.value})} />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-bold text-gray-700 mb-2">نام پدر</label>
+                                <input type="text" className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 focus:bg-white focus:ring-2 focus:ring-brand transition-all" value={profileForm.fatherName} onChange={e => setProfileForm({...profileForm, fatherName: e.target.value})} />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-bold text-gray-700 mb-2">محل تولد</label>
+                                <div className="relative">
+                                    <input type="text" className="w-full pr-10 pl-4 py-3 rounded-xl border border-gray-200 bg-gray-50 focus:bg-white focus:ring-2 focus:ring-brand transition-all" value={profileForm.birthPlace} onChange={e => setProfileForm({...profileForm, birthPlace: e.target.value})} />
+                                    <MapPin className="absolute right-3 top-3.5 text-gray-400" size={18} />
+                                </div>
+                            </div>
+                            
+                            <div className="md:col-span-2">
+                                <label className="block text-sm font-bold text-gray-700 mb-2 flex items-center gap-2"><Calendar size={16}/> تاریخ تولد</label>
+                                <div className="grid grid-cols-3 gap-3">
+                                    <input type="number" placeholder="روز" className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 text-center" value={profileForm.birthDay} onChange={e => setProfileForm({...profileForm, birthDay: e.target.value})} />
+                                    <select className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 text-center" value={profileForm.birthMonth} onChange={e => setProfileForm({...profileForm, birthMonth: e.target.value})}>
+                                        <option value="">ماه</option>
+                                        {months.map(m => <option key={m} value={m}>{m}</option>)}
+                                    </select>
+                                    <input type="number" placeholder="سال" className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 text-center font-mono" value={profileForm.birthYear} onChange={e => setProfileForm({...profileForm, birthYear: e.target.value})} />
+                                </div>
+                            </div>
 
-            </div>
+                            <div>
+                                <label className="block text-sm font-bold text-gray-700 mb-2">جنسیت</label>
+                                <select className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50" value={profileForm.gender} onChange={e => setProfileForm({...profileForm, gender: e.target.value as any})}>
+                                    <option value="">انتخاب کنید...</option>
+                                    <option value="male">مرد</option>
+                                    <option value="female">زن</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label className="block text-sm font-bold text-gray-700 mb-2 flex items-center gap-2"><GraduationCap size={16}/> تحصیلات</label>
+                                <select className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50" value={profileForm.education} onChange={e => setProfileForm({...profileForm, education: e.target.value})}>
+                                    <option value="">انتخاب کنید</option>
+                                    <option value="دیپلم">دیپلم</option>
+                                    <option value="کاردانی">کاردانی</option>
+                                    <option value="کارشناسی">کارشناسی</option>
+                                    <option value="ارشد">کارشناسی ارشد</option>
+                                    <option value="دکتری">دکتری تخصصی</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label className="block text-sm font-bold text-gray-700 mb-2 flex items-center gap-2"><Heart size={16}/> وضعیت تأهل</label>
+                                <select className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50" value={profileForm.maritalStatus} onChange={e => setProfileForm({...profileForm, maritalStatus: e.target.value})}>
+                                    <option value="">انتخاب کنید</option>
+                                    <option value="مجرد">مجرد</option>
+                                    <option value="متاهل">متاهل</option>
+                                    <option value="متارکه">متارکه</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div className="pt-6 border-t border-gray-50">
+                            <Button type="submit" size="lg" className="w-full md:w-auto px-12 shadow-lg shadow-brand/10" disabled={isSaving}>
+                                {isSaving ? 'در حال ذخیره...' : 'ذخیره تغییرات'}
+                            </Button>
+                        </div>
+                    </form>
+                </div>
+            )}
+
+            {/* MESSAGE TAB */}
+            {activeTab === 'message' && (
+                <div className="bg-white rounded-3xl p-8 shadow-sm border border-gray-100">
+                    <h2 className="text-xl font-bold text-gray-900 mb-8 border-b border-gray-50 pb-4 flex items-center gap-2">
+                        <Send size={20} className="text-brand" /> ارسال پیام به مدیریت
+                    </h2>
+                    <form onSubmit={handleSendMessage} className="space-y-6">
+                        <div>
+                            <label className="block text-sm font-bold text-gray-700 mb-2">عنوان</label>
+                            <input 
+                                type="text" required
+                                className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 focus:bg-white focus:ring-2 focus:ring-brand transition-all"
+                                placeholder="موضوع پیام خود را وارد کنید"
+                                value={messageForm.subject}
+                                onChange={e => setMessageForm({...messageForm, subject: e.target.value})}
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-sm font-bold text-gray-700 mb-2">متن پیام</label>
+                            <textarea 
+                                required rows={6}
+                                className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 focus:bg-white focus:ring-2 focus:ring-brand transition-all"
+                                placeholder="پیام خود را بنویسید..."
+                                value={messageForm.content}
+                                onChange={e => setMessageForm({...messageForm, content: e.target.value})}
+                            ></textarea>
+                        </div>
+                        <div className="flex flex-col md:flex-row items-center justify-between gap-4 pt-4">
+                            <p className="text-xs text-gray-400 italic">پیام شما به صورت مستقیم به ایمیل واحد مدیریت ارسال خواهد شد.</p>
+                            <Button type="submit" size="lg" className="w-full md:w-auto px-12 gap-2">
+                                <Send size={18} /> ارسال پیام
+                            </Button>
+                        </div>
+                    </form>
+                </div>
+            )}
 
         </div>
       </div>

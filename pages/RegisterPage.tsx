@@ -1,10 +1,9 @@
 
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { UserPlus, CheckCircle } from 'lucide-react';
+import { UserPlus, CheckCircle, Calendar } from 'lucide-react';
 import Button from '../components/Button';
 import { useAuth } from '../context/AuthContext';
-/* Fix: Import UserData from types.ts as it is not exported from AuthContext */
 import { UserData } from '../types';
 
 const RegisterPage: React.FC = () => {
@@ -14,14 +13,27 @@ const RegisterPage: React.FC = () => {
   const [formData, setFormData] = useState({
     fullNameFa: '',
     fullNameEn: '',
-    age: '',
-    gender: 'male' as 'male' | 'female',
+    fatherName: '',
+    birthPlace: '',
+    birthDay: '',
+    birthMonth: '',
+    birthYear: '',
+    gender: '' as 'male' | 'female' | '',
     education: '',
     maritalStatus: '',
     mobile: '',
     nationalCode: '',
     confirmNationalCode: ''
   });
+
+  const months = [
+    'فروردین', 'اردیبهشت', 'خرداد', 'تیر', 'مرداد', 'شهریور',
+    'مهر', 'آبان', 'آذر', 'دی', 'بهمن', 'اسفند'
+  ];
+
+  const educationLevels = [
+    'دیپلم', 'کاردانی', 'کارشناسی', 'کارشناسی ارشد', 'دکتری تخصصی', 'سایر'
+  ];
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -31,11 +43,26 @@ const RegisterPage: React.FC = () => {
       return;
     }
 
-    const { confirmNationalCode, age, ...rest } = formData;
+    if (!formData.gender) {
+      alert('لطفاً جنسیت را انتخاب کنید.');
+      return;
+    }
+
+    const { confirmNationalCode, birthDay, birthMonth, birthYear, ...rest } = formData;
+
+    // Calculate approximate age based on solar year (Current year 1403)
+    const currentYear = 1403;
+    const age = currentYear - (parseInt(birthYear) || 0);
 
     const userData: UserData = {
       ...rest,
-      age: parseInt(age) || 0,
+      gender: formData.gender as 'male' | 'female',
+      age,
+      birthDate: {
+        day: birthDay,
+        month: birthMonth,
+        year: birthYear
+      },
       role: 'user'
     };
 
@@ -81,8 +108,10 @@ const RegisterPage: React.FC = () => {
         
         <form onSubmit={handleSubmit} className="p-8 space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">نام و نام خانوادگی (فارسی)</label>
+            
+            {/* Full Name Fa */}
+            <div className="md:col-span-1">
+              <label className="block text-sm font-bold text-gray-700 mb-2">نام و نام خانوادگی (فارسی) *</label>
               <input
                 type="text"
                 required
@@ -92,8 +121,9 @@ const RegisterPage: React.FC = () => {
               />
             </div>
             
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">نام و نام خانوادگی (انگلیسی)</label>
+            {/* Full Name En */}
+            <div className="md:col-span-1">
+              <label className="block text-sm font-bold text-gray-700 mb-2">نام و نام خانوادگی (انگلیسی) *</label>
               <input
                 type="text"
                 required
@@ -104,45 +134,104 @@ const RegisterPage: React.FC = () => {
               />
             </div>
 
+            {/* Father Name */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">سن</label>
+              <label className="block text-sm font-bold text-gray-700 mb-2">نام پدر *</label>
               <input
-                type="number"
+                type="text"
                 required
-                min="10"
-                max="100"
                 className="w-full px-4 py-2 rounded-xl border border-gray-200 focus:ring-2 focus:ring-brand focus:border-brand"
-                value={formData.age}
-                onChange={e => setFormData({...formData, age: e.target.value})}
+                value={formData.fatherName}
+                onChange={e => setFormData({...formData, fatherName: e.target.value})}
               />
             </div>
 
+            {/* Birth Place */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">جنسیت</label>
+              <label className="block text-sm font-bold text-gray-700 mb-2">محل تولد *</label>
+              <input
+                type="text"
+                required
+                className="w-full px-4 py-2 rounded-xl border border-gray-200 focus:ring-2 focus:ring-brand focus:border-brand"
+                value={formData.birthPlace}
+                onChange={e => setFormData({...formData, birthPlace: e.target.value})}
+              />
+            </div>
+
+            {/* Birth Date Section */}
+            <div className="md:col-span-2">
+              <label className="block text-sm font-bold text-gray-700 mb-2">تاریخ تولد (شمسی) *</label>
+              <div className="grid grid-cols-3 gap-3">
+                <input
+                  type="number"
+                  placeholder="روز"
+                  required
+                  min="1"
+                  max="31"
+                  className="w-full px-3 py-2 rounded-xl border border-gray-200 focus:ring-2 focus:ring-brand focus:border-brand text-center"
+                  value={formData.birthDay}
+                  onChange={e => setFormData({...formData, birthDay: e.target.value})}
+                />
+                <select
+                  required
+                  className="w-full px-3 py-2 rounded-xl border border-gray-200 focus:ring-2 focus:ring-brand focus:border-brand text-center"
+                  value={formData.birthMonth}
+                  onChange={e => setFormData({...formData, birthMonth: e.target.value})}
+                >
+                  <option value="">ماه</option>
+                  {months.map((m, i) => (
+                    <option key={i} value={m}>{m}</option>
+                  ))}
+                </select>
+                <input
+                  type="number"
+                  placeholder="سال"
+                  required
+                  min="1300"
+                  max="1403"
+                  className="w-full px-3 py-2 rounded-xl border border-gray-200 focus:ring-2 focus:ring-brand focus:border-brand text-center"
+                  value={formData.birthYear}
+                  onChange={e => setFormData({...formData, birthYear: e.target.value})}
+                />
+              </div>
+            </div>
+
+            {/* Gender */}
+            <div>
+              <label className="block text-sm font-bold text-gray-700 mb-2">جنسیت *</label>
               <select
+                required
                 className="w-full px-4 py-2 rounded-xl border border-gray-200 focus:ring-2 focus:ring-brand focus:border-brand"
                 value={formData.gender}
                 onChange={e => setFormData({...formData, gender: e.target.value as 'male' | 'female'})}
               >
+                <option value="">انتخاب کنید...</option>
                 <option value="male">مرد</option>
                 <option value="female">زن</option>
               </select>
             </div>
 
+            {/* Education Level */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">میزان تحصیلات</label>
-              <input
-                type="text"
+              <label className="block text-sm font-bold text-gray-700 mb-2">میزان تحصیلات *</label>
+              <select
                 required
                 className="w-full px-4 py-2 rounded-xl border border-gray-200 focus:ring-2 focus:ring-brand focus:border-brand"
                 value={formData.education}
                 onChange={e => setFormData({...formData, education: e.target.value})}
-              />
+              >
+                <option value="">انتخاب کنید...</option>
+                {educationLevels.map((lvl, i) => (
+                  <option key={i} value={lvl}>{lvl}</option>
+                ))}
+              </select>
             </div>
 
+            {/* Marital Status */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">وضعیت تأهل</label>
+              <label className="block text-sm font-bold text-gray-700 mb-2">وضعیت تأهل *</label>
               <select
+                 required
                  className="w-full px-4 py-2 rounded-xl border border-gray-200 focus:ring-2 focus:ring-brand focus:border-brand"
                  value={formData.maritalStatus}
                  onChange={e => setFormData({...formData, maritalStatus: e.target.value})}
@@ -150,15 +239,18 @@ const RegisterPage: React.FC = () => {
                  <option value="">انتخاب کنید...</option>
                  <option value="مجرد">مجرد</option>
                  <option value="متاهل">متاهل</option>
+                 <option value="متارکه">متارکه</option>
               </select>
             </div>
             
-            <div className="md:col-span-2 border-t border-gray-100 pt-4 mt-2">
-                 <h3 className="text-sm font-bold text-brand mb-4">اطلاعات ورود به سامانه</h3>
+            {/* Divider */}
+            <div className="md:col-span-2 border-t border-gray-100 pt-6 mt-2">
+                 <h3 className="text-lg font-bold text-brand mb-4">اطلاعات ورود به سامانه</h3>
             </div>
 
+            {/* Mobile / Username */}
             <div className="md:col-span-2">
-              <label className="block text-sm font-medium text-gray-700 mb-2">شماره همراه (نام کاربری)</label>
+              <label className="block text-sm font-bold text-gray-700 mb-2">شماره همراه (نام کاربری) *</label>
               <input
                 type="tel"
                 required
@@ -170,8 +262,9 @@ const RegisterPage: React.FC = () => {
               />
             </div>
 
+            {/* National Code / Password */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">کد ملی (رمز عبور)</label>
+              <label className="block text-sm font-bold text-gray-700 mb-2">کد ملی (رمز عبور) *</label>
               <input
                 type="password"
                 required
@@ -182,8 +275,9 @@ const RegisterPage: React.FC = () => {
               />
             </div>
 
+            {/* Confirm Password */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">تکرار رمز عبور</label>
+              <label className="block text-sm font-bold text-gray-700 mb-2">تکرار رمز عبور *</label>
               <input
                 type="password"
                 required

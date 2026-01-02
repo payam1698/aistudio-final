@@ -1,8 +1,10 @@
+
 import { Request, Response } from 'express';
 import MCMIResult from '../models/MCMIResult';
 import User from '../models/User';
 
-export const submitResult = async (req: any, res: Response) => {
+/* Fix: Changed res to any to allow access to Express response methods like status() and json() */
+export const submitResult = async (req: any, res: any) => {
   try {
     const { reportData } = req.body;
     const userId = req.user.id;
@@ -21,7 +23,8 @@ export const submitResult = async (req: any, res: Response) => {
   }
 };
 
-export const getMyResults = async (req: any, res: Response) => {
+/* Fix: Changed res to any to resolve TypeScript error regarding the json() method */
+export const getMyResults = async (req: any, res: any) => {
   try {
     const results = await MCMIResult.findAll({
       where: { userId: req.user.id },

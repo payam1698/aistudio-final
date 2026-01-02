@@ -1,42 +1,59 @@
 # Database Documentation (SQL)
 
-### 1. Create Users Table
+### 1. Users & MCMI
+(See previous schema)
+
+### 2. Instructors Table
 ```sql
-CREATE TABLE users (
+CREATE TABLE instructors (
     id SERIAL PRIMARY KEY,
-    mobile VARCHAR(15) UNIQUE NOT NULL,
-    nationalCode VARCHAR(255) NOT NULL,
-    fullNameFa VARCHAR(255) NOT NULL,
-    fullNameEn VARCHAR(255),
-    fatherName VARCHAR(255),
-    birthPlace VARCHAR(255),
-    birthDate JSONB NOT NULL,
-    age INTEGER,
-    gender VARCHAR(10) CHECK (gender IN ('male', 'female')),
-    education VARCHAR(255),
-    maritalStatus VARCHAR(255),
-    role VARCHAR(10) DEFAULT 'user' CHECK (role IN ('admin', 'user')),
-    mcmiStatus VARCHAR(10) DEFAULT 'none' CHECK (mcmiStatus IN ('none', 'approved')),
+    name VARCHAR(255) NOT NULL,
+    title VARCHAR(255) NOT NULL,
+    imageUrl TEXT,
+    specialties JSONB DEFAULT '[]',
+    bio TEXT,
     "createdAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 ```
 
-### 2. Create MCMI Results Table
+### 3. Courses Table
 ```sql
-CREATE TABLE mcmi_results (
+CREATE TABLE courses (
+    id SERIAL PRIMARY KEY,
+    title VARCHAR(255) NOT NULL,
+    description TEXT,
+    price BIGINT NOT NULL,
+    imageUrl TEXT,
+    instructorId INTEGER REFERENCES instructors(id) ON DELETE SET NULL,
+    syllabus JSONB,
+    "createdAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+```
+
+### 4. Articles (Blog) Table
+```sql
+CREATE TABLE articles (
+    id SERIAL PRIMARY KEY,
+    title VARCHAR(255) NOT NULL,
+    content TEXT NOT NULL,
+    imageUrl TEXT,
+    category VARCHAR(100),
+    author VARCHAR(100),
+    "createdAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+```
+
+### 5. Enrollments Table
+```sql
+CREATE TABLE enrollments (
     id SERIAL PRIMARY KEY,
     userId INTEGER REFERENCES users(id) ON DELETE CASCADE,
-    reportData JSONB NOT NULL,
-    testDate TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    courseId INTEGER REFERENCES courses(id) ON DELETE CASCADE,
+    paymentStatus VARCHAR(20) DEFAULT 'pending',
     "createdAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
-```
-
-### 3. Seed Admin Data
-*Note: Password '09197926720' is hashed.*
-```sql
-INSERT INTO users (mobile, nationalCode, fullNameFa, role, birthDate, gender) 
-VALUES ('09197926720', '$2a$10$7R6G.A0Yq8yP/S/oYQ4U/e0lX9XoYq8yP/S/oYQ4U/e', 'مدیر سیستم', 'admin', '{"day": "1", "month": "فروردین", "year": "1360"}', 'male');
 ```

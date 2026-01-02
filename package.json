@@ -1,5 +1,5 @@
 {
-  "name": "ravankargah-اصلی",
+  "name": "ravankargah-orginal",
   "private": true,
   "version": "0.0.0",
   "type": "module",
@@ -12,7 +12,13 @@
     "react": "18.2.0",
     "react-dom": "^19.2.3",
     "react-router-dom": "6.22.3",
-    "lucide-react": "0.344.0"
+    "lucide-react": "0.344.0",
+    "dotenv": "^17.2.3",
+    "cors": "^2.8.5",
+    "jsonwebtoken": "^9.0.3",
+    "bcryptjs": "^3.0.3",
+    "express": "^5.2.1",
+    "sequelize": "^6.37.7"
   },
   "devDependencies": {
     "@types/node": "^22.14.0",

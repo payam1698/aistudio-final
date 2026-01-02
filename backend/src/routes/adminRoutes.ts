@@ -4,14 +4,10 @@ import * as adminController from '../controllers/adminController';
 
 const router = express.Router();
 
-// Middleware checking for admin role could be added here
-router.use(protect); 
+router.use(protect); // All admin routes need login
 
-// User Management
 router.get('/users', adminController.getAllUsers);
 router.patch('/users/:id', adminController.updateUserStatus);
-
-// Content Management
 router.post('/courses', adminController.createCourse);
 router.delete('/courses/:id', adminController.deleteCourse);
 router.post('/instructors', adminController.createInstructor);

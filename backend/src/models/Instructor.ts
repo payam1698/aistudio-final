@@ -5,9 +5,9 @@ class Instructor extends Model<InferAttributes<Instructor>, InferCreationAttribu
   declare id: CreationOptional<number>;
   declare name: string;
   declare title: string;
-  declare imageUrl: string;
-  declare specialties: string[]; // JSONB array
-  declare bio: string;
+  declare imageUrl: CreationOptional<string>;
+  declare specialties: CreationOptional<string[]>; // JSON array
+  declare bio: CreationOptional<string>;
 }
 
 Instructor.init({
@@ -15,7 +15,7 @@ Instructor.init({
   name: { type: DataTypes.STRING, allowNull: false },
   title: { type: DataTypes.STRING, allowNull: false },
   imageUrl: { type: DataTypes.STRING },
-  specialties: { type: DataTypes.JSONB, defaultValue: [] },
+  specialties: { type: DataTypes.JSON },
   bio: { type: DataTypes.TEXT }
 }, {
   sequelize,

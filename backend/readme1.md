@@ -1,59 +1,65 @@
-# Database Documentation (SQL)
+# MySQL Database Queries
 
-### 1. Users & MCMI
-(See previous schema)
+Run these queries in your MySQL client (like phpMyAdmin or MySQL Workbench):
+
+### 1. Database Creation
+```sql
+CREATE DATABASE IF NOT EXISTS ravankargah_db;
+USE ravankargah_db;
+```
 
 ### 2. Instructors Table
 ```sql
 CREATE TABLE instructors (
-    id SERIAL PRIMARY KEY,
+    id INT AUTO_INCREMENT PRIMARY KEY,
     name VARCHAR(255) NOT NULL,
     title VARCHAR(255) NOT NULL,
     imageUrl TEXT,
-    specialties JSONB DEFAULT '[]',
+    specialties JSON,
     bio TEXT,
-    "createdAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-    "updatedAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+    createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
 ```
 
-### 3. Courses Table
+### 3. Users Table
 ```sql
-CREATE TABLE courses (
-    id SERIAL PRIMARY KEY,
-    title VARCHAR(255) NOT NULL,
-    description TEXT,
-    price BIGINT NOT NULL,
-    imageUrl TEXT,
-    instructorId INTEGER REFERENCES instructors(id) ON DELETE SET NULL,
-    syllabus JSONB,
-    "createdAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-    "updatedAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+CREATE TABLE users (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    mobile VARCHAR(15) UNIQUE NOT NULL,
+    nationalCode VARCHAR(255) NOT NULL,
+    fullNameFa VARCHAR(255) NOT NULL,
+    fullNameEn VARCHAR(255),
+    fatherName VARCHAR(255),
+    birthPlace VARCHAR(255),
+    birthDate JSON NOT NULL,
+    age INT,
+    gender ENUM('male', 'female') NOT NULL,
+    education VARCHAR(255),
+    maritalStatus VARCHAR(255),
+    role ENUM('admin', 'user') DEFAULT 'user',
+    mcmiStatus ENUM('none', 'approved') DEFAULT 'none',
+    createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
 ```
 
-### 4. Articles (Blog) Table
+### 4. MCMI Results Table
 ```sql
-CREATE TABLE articles (
-    id SERIAL PRIMARY KEY,
-    title VARCHAR(255) NOT NULL,
-    content TEXT NOT NULL,
-    imageUrl TEXT,
-    category VARCHAR(100),
-    author VARCHAR(100),
-    "createdAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-    "updatedAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+CREATE TABLE mcmi_results (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    userId INT NOT NULL,
+    reportData JSON NOT NULL,
+    testDate DATETIME DEFAULT CURRENT_TIMESTAMP,
+    createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (userId) REFERENCES users(id) ON DELETE CASCADE
 );
 ```
 
-### 5. Enrollments Table
+### 5. Seed Admin User
+*(Password '09197926720' hashed)*
 ```sql
-CREATE TABLE enrollments (
-    id SERIAL PRIMARY KEY,
-    userId INTEGER REFERENCES users(id) ON DELETE CASCADE,
-    courseId INTEGER REFERENCES courses(id) ON DELETE CASCADE,
-    paymentStatus VARCHAR(20) DEFAULT 'pending',
-    "createdAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-    "updatedAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
-);
+INSERT INTO users (mobile, nationalCode, fullNameFa, role, birthDate, gender) 
+VALUES ('09197926720', '$2a$10$7R6G.A0Yq8yP/S/oYQ4U/e0lX9XoYq8yP/S/oYQ4U/e', 'مدیر سیستم', 'admin', '{"day": "1", "month": "فروردین", "year": "1360"}', 'male');
 ```

@@ -7,7 +7,7 @@ class Enrollment extends Model<InferAttributes<Enrollment>, InferCreationAttribu
   declare id: CreationOptional<number>;
   declare userId: number;
   declare courseId: number;
-  declare paymentStatus: 'pending' | 'completed' | 'installment';
+  declare paymentStatus: CreationOptional<'pending' | 'completed' | 'installment'>;
 }
 
 Enrollment.init({
@@ -29,10 +29,5 @@ Enrollment.init({
   modelName: 'Enrollment',
   tableName: 'enrollments'
 });
-
-User.hasMany(Enrollment, { foreignKey: 'userId' });
-Course.hasMany(Enrollment, { foreignKey: 'courseId' });
-Enrollment.belongsTo(User, { foreignKey: 'userId' });
-Enrollment.belongsTo(Course, { foreignKey: 'courseId' });
 
 export default Enrollment;

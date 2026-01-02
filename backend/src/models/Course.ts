@@ -5,11 +5,11 @@ import Instructor from './Instructor';
 class Course extends Model<InferAttributes<Course>, InferCreationAttributes<Course>> {
   declare id: CreationOptional<number>;
   declare title: string;
-  declare description: string;
+  declare description: CreationOptional<string>;
   declare price: number;
-  declare imageUrl: string;
+  declare imageUrl: CreationOptional<string>;
   declare instructorId: number;
-  declare syllabus: object; // JSONB for modules/topics
+  declare syllabus: CreationOptional<object>; // JSONB logic from Postgres to JSON in MySQL
 }
 
 Course.init({
@@ -22,7 +22,7 @@ Course.init({
     type: DataTypes.INTEGER,
     references: { model: Instructor, key: 'id' }
   },
-  syllabus: { type: DataTypes.JSONB }
+  syllabus: { type: DataTypes.JSON }
 }, {
   sequelize,
   modelName: 'Course',

@@ -5,9 +5,9 @@ class Article extends Model<InferAttributes<Article>, InferCreationAttributes<Ar
   declare id: CreationOptional<number>;
   declare title: string;
   declare content: string;
-  declare imageUrl: string;
-  declare category: string;
-  declare author: string;
+  declare imageUrl: CreationOptional<string>;
+  declare category: CreationOptional<string>;
+  declare author: CreationOptional<string>;
 }
 
 Article.init({

@@ -1,10 +1,8 @@
-
 import { Request, Response } from 'express';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import User from '../models/User';
 
-/* Fix: Changed req and res to any to ensure properties like 'body', 'status', and 'json' are accessible, bypassing type resolution issues in the current environment */
 export const register = async (req: any, res: any) => {
   try {
     const { mobile, nationalCode, ...otherData } = req.body;
@@ -28,7 +26,6 @@ export const register = async (req: any, res: any) => {
   }
 };
 
-/* Fix: Changed req and res to any to avoid 'Property does not exist' errors on Request and Response types */
 export const login = async (req: any, res: any) => {
   try {
     const { mobile, nationalCode } = req.body;
@@ -46,12 +43,11 @@ export const login = async (req: any, res: any) => {
     const token = jwt.sign(
       { id: user.id, role: user.role },
       process.env.JWT_SECRET as string,
-      { expiresIn: '7d' }
+      { expiresIn: '30d' }
     );
 
-    // Don't send hashed code back
     const userObj = user.toJSON();
-    delete userObj.nationalCode;
+    delete (userObj as any).nationalCode;
 
     res.json({ success: true, user: userObj, token });
   } catch (error: any) {
@@ -59,15 +55,11 @@ export const login = async (req: any, res: any) => {
   }
 };
 
-/* Fix: Changed res to any to allow calling Express response methods like status() and json() */
 export const getMe = async (req: any, res: any) => {
   try {
-    const user = await User.findByPk(req.user.id);
+    const user = await User.findByPk(req.user.id, { attributes: { exclude: ['nationalCode'] } });
     if (!user) return res.status(404).json({ message: 'User not found' });
-    
-    const userObj = user.toJSON();
-    delete userObj.nationalCode;
-    res.json(userObj);
+    res.json(user);
   } catch (error: any) {
     res.status(500).json({ message: error.message });
   }
